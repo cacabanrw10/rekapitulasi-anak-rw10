@@ -173,6 +173,11 @@
       height: 280px;
     }
 
+    .chart-wrapper-timeseries {
+      position: relative;
+      height: 320px;
+    }
+
     .rekom-list {
       display: flex;
       flex-direction: column;
@@ -421,6 +426,67 @@
       border-top: 1px solid #E5E8EB;
       padding-top: 24px;
     }
+
+    .timeseries-container {
+      margin-top: 28px;
+    }
+
+    .timeseries-container .card {
+      padding: 24px;
+    }
+
+    .timeseries-container .card h3 {
+      margin-bottom: 18px;
+    }
+
+    .timeseries-container .card .chart-wrapper-timeseries {
+      position: relative;
+      height: 320px;
+    }
+
+    .timeseries-container .card .chart-wrapper-timeseries canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    .legend-timeseries {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      margin-top: 12px;
+      padding: 12px 0;
+      justify-content: center;
+    }
+
+    .legend-timeseries .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .legend-timeseries .legend-item .color-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--gray);
+    }
+
+    .empty-state i {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+    }
   </style>
 </head>
 
@@ -428,6 +494,7 @@
 
   <div class="container" id="app">
 
+    <!-- HEADER -->
     <div class="header">
       <h1><i class="fas fa-children"></i> Pemetaan Anak RW 10</h1>
       <div class="header-badge">
@@ -436,6 +503,7 @@
       </div>
     </div>
 
+    <!-- STATISTIK -->
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card primary">
         <div class="label"><i class="fas fa-users"></i> Total Anak</div>
@@ -459,6 +527,7 @@
       </div>
     </div>
 
+    <!-- GRAFIK + REKOMENDASI -->
     <div class="row-two">
       <div class="card">
         <h3><i class="fas fa-chart-bar"></i> Persebaran Anak per RT</h3>
@@ -480,6 +549,7 @@
       </div>
     </div>
 
+    <!-- TABEL RIWAYAT -->
     <div class="card" style="margin-bottom: 28px;">
       <h3><i class="fas fa-history"></i> Riwayat Perubahan Data</h3>
       <div class="table-wrap">
@@ -499,6 +569,22 @@
       </div>
     </div>
 
+    <!-- GRAFIK TIME SERIES -->
+    <div class="timeseries-container">
+      <div class="card">
+        <h3><i class="fas fa-chart-line"></i> Tren Perubahan Data Anak (3 Perubahan Terakhir)</h3>
+        <div class="chart-wrapper-timeseries">
+          <canvas id="chartTimeSeries"></canvas>
+        </div>
+        <div id="legendTimeSeries" class="legend-timeseries"></div>
+        <div id="emptyTimeSeries" class="empty-state" style="display:none;">
+          <i class="fas fa-chart-line"></i>
+          <p>Belum ada data riwayat yang cukup.<br>Lakukan minimal 1 perubahan untuk melihat grafik tren.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORM INPUT -->
     <div class="input-section">
       <h3><i class="fas fa-pen"></i> Update Data Anak per RT</h3>
       <div class="input-grid" id="inputGrid"></div>
@@ -516,6 +602,7 @@
     </div>
   </div>
 
+  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -525,8 +612,14 @@
     const API_BASE = 'https://sheetdb.io/api/v1/w75ilqhtz3tmr';
     const API_RIWAYAT = API_BASE + '?sheet=RIWAYAT';
 
+    // Warna untuk 8 RT
+    const RT_COLORS = [
+      '#2A7DE1', '#27AE60', '#F39C12', '#E74C3C',
+      '#8E44AD', '#1ABC9C', '#E67E22', '#34495E'
+    ];
+
     // ================================================================
-    //  2. HELPER TANGGAL (KONSISTEN DD/MM/YYYY HH:mm:ss)
+    //  2. HELPER TANGGAL
     // ================================================================
     function formatTanggal(date) {
       const d = String(date.getDate()).padStart(2, '0');
@@ -559,7 +652,9 @@
     //  3. STATE
     // ================================================================
     let dataAktif = [];
+    let dataRiwayat = [];
     let chartInstance = null;
+    let chartTimeSeries = null;
     let isLoading = false;
     let isSaving = false;
 
@@ -594,7 +689,7 @@
     }
 
     // ================================================================
-    //  6. FETCH DATA (PARALLEL)
+    //  6. FETCH DATA
     // ================================================================
     async function fetchDataAktif() {
       const res = await fetch(API_BASE);
@@ -714,9 +809,6 @@
       rekomList.innerHTML = rekom1 + rekom2;
     }
 
-    // ================================================================
-    //  7a. RENDER RIWAYAT (HANYA 1 BARIS TERBARU PER RT)
-    // ================================================================
     function renderRiwayat(rows) {
       if (!rows || rows.length === 0) {
         riwayatBody.innerHTML =
@@ -725,7 +817,6 @@
         return;
       }
 
-      // Ambil data terbaru per RT
       const latestPerRT = {};
       for (const row of rows) {
         const rt = row.RT;
@@ -735,7 +826,6 @@
         }
       }
 
-      // Urutkan berdasarkan RT
       const latestRows = Object.values(latestPerRT).sort((a, b) => a.RT.localeCompare(b.RT));
 
       totalUpdateEl.textContent = rows.length;
@@ -756,6 +846,153 @@
       riwayatBody.innerHTML = html;
     }
 
+    // ================================================================
+    //  7a. RENDER GRAFIK TIME SERIES (3 Perubahan Terakhir)
+    // ================================================================
+    function renderTimeSeries(rows) {
+      const ctx = document.getElementById('chartTimeSeries').getContext('2d');
+      const emptyEl = document.getElementById('emptyTimeSeries');
+      const legendEl = document.getElementById('legendTimeSeries');
+
+      // Hapus grafik lama
+      if (chartTimeSeries) {
+        chartTimeSeries.destroy();
+        chartTimeSeries = null;
+      }
+
+      // Jika kurang dari 1 batch data (minimal 1 titik waktu)
+      if (!rows || rows.length < 8) {
+        ctx.canvas.style.display = 'none';
+        emptyEl.style.display = 'block';
+        legendEl.innerHTML = '';
+        return;
+      }
+
+      ctx.canvas.style.display = 'block';
+      emptyEl.style.display = 'none';
+
+      // Kelompokkan data per tanggal (batch)
+      const batches = [];
+      const tempMap = {};
+
+      for (const row of rows) {
+        const key = row.TANGGAL;
+        if (!tempMap[key]) {
+          tempMap[key] = [];
+        }
+        tempMap[key].push(row);
+      }
+
+      // Ubah ke array dan urutkan berdasarkan tanggal
+      const sortedKeys = Object.keys(tempMap).sort((a, b) => parseTanggal(a) - parseTanggal(b));
+
+      // Ambil 3 terakhir
+      const lastThreeKeys = sortedKeys.slice(-3);
+
+      for (const key of lastThreeKeys) {
+        const batch = tempMap[key];
+        const dataMap = {};
+        for (const item of batch) {
+          dataMap[item.RT] = item.JUMLAH_ANAK;
+        }
+        batches.push({
+          tanggal: key,
+          data: dataMap
+        });
+      }
+
+      // Siapkan dataset untuk 8 RT
+      const rtNames = ['RT 01', 'RT 02', 'RT 03', 'RT 04', 'RT 05', 'RT 06', 'RT 07', 'RT 08'];
+      const labels = batches.map(b => b.tanggal);
+
+      const datasets = rtNames.map((rt, index) => {
+        const color = RT_COLORS[index % RT_COLORS.length];
+        const data = batches.map(batch => {
+          return batch.data[rt] !== undefined ? batch.data[rt] : null;
+        });
+
+        return {
+          label: rt,
+          data: data,
+          borderColor: color,
+          backgroundColor: color + '33',
+          borderWidth: 2.5,
+          pointRadius: 5,
+          pointBackgroundColor: color,
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          tension: 0.2,
+          spanGaps: false,
+          fill: false
+        };
+      });
+
+      // Buat grafik
+      chartTimeSeries = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y + ' anak';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                font: { size: 12 }
+              },
+              title: {
+                display: true,
+                text: 'Jumlah Anak',
+                font: { size: 13, weight: 'bold' }
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 11 },
+                maxRotation: 20,
+                minRotation: 10
+              },
+              title: {
+                display: true,
+                text: 'Waktu Update',
+                font: { size: 13, weight: 'bold' }
+              }
+            }
+          }
+        }
+      });
+
+      // Buat legend manual (8 warna)
+      let legendHtml = '';
+      rtNames.forEach((rt, index) => {
+        const color = RT_COLORS[index % RT_COLORS.length];
+        legendHtml += `<div class="legend-item">
+          <span class="color-box" style="background:${color};"></span>
+          ${rt}
+        </div>`;
+      });
+      legendEl.innerHTML = legendHtml;
+    }
+
+    // ================================================================
+    //  8. SANITASI
+    // ================================================================
     function escapeHtml(text) {
       if (!text) return '';
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -778,7 +1015,7 @@
     }
 
     // ================================================================
-    //  8. LOAD ALL (PARALLEL)
+    //  9. LOAD ALL
     // ================================================================
     async function loadAll() {
       if (isLoading) return;
@@ -789,11 +1026,13 @@
           fetchRiwayat()
         ]);
         dataAktif = aktif;
+        dataRiwayat = riwayat;
         renderStats(aktif);
         renderChart(aktif);
         renderRekomendasi(aktif);
         renderInputForm(aktif);
         renderRiwayat(riwayat);
+        renderTimeSeries(riwayat);
       } catch (err) {
         console.error(err);
         showToast('Gagal memuat data: ' + err.message, 'error');
@@ -803,7 +1042,7 @@
     }
 
     // ================================================================
-    //  9. SIMPAN DATA (PUT per ID - PALING AMAN)
+    //  10. SIMPAN DATA
     // ================================================================
     async function simpanData() {
       if (isSaving) return;
@@ -887,7 +1126,7 @@
     }
 
     // ================================================================
-    //  10. RESET FORM
+    //  11. RESET FORM
     // ================================================================
     function resetForm() {
       if (dataAktif.length === 0) {
@@ -899,7 +1138,7 @@
     }
 
     // ================================================================
-    //  11. INIT
+    //  12. INIT
     // ================================================================
     document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('footerYear').textContent = new Date().getFullYear();
@@ -916,4 +1155,4 @@
   </script>
 
 </body>
-  </html>
+          </html>
