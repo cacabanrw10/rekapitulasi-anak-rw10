@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Pemetaan Anak RW 10</title>
+  <!-- Chart.js untuk grafik -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Font Awesome untuk ikon -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    /* Reset & Variabel */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    :root {
+      --primary: #2A7DE1;
+      --primary-light: #E8F0FE;
+      --success: #27AE60;
+      --warning: #F39C12;
+      --danger: #E74C3C;
+      --gray: #7F8C8D;
+      --light-bg: #F4F7FC;
+      --card-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+    }
+    body {
+      background: var(--light-bg);
+      padding: 24px;
+      color: #2C3E50;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    /* Header */
+    .header {
+      background: white;
+      padding: 24px 32px;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      margin-bottom: 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .header h1 {
+      font-size: 24px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header h1 i {
+      color: var(--primary);
+    }
+    .header-badge {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 8px 18px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .header-badge i {
+      font-size: 12px;
+    }
+
+    /* Kartu Statistik */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 18px;
+      margin-bottom: 28px;
+    }
+    .stat-card {
+      background: white;
+      padding: 20px 24px;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      transition: transform 0.2s;
+    }
+    .stat-card:hover {
+      transform: translateY(-4px);
+    }
+    .stat-card .label {
+      font-size: 14px;
+      color: var(--gray);
+      font-weight: 500;
+      letter-spacing: 0.3px;
+      margin-bottom: 6px;
+    }
+    .stat-card .value {
+      font-size: 32px;
+      font-weight: 700;
+      color: #1A1A2E;
+    }
+    .stat-card .sub {
+      font-size: 13px;
+      color: var(--gray);
+      margin-top: 6px;
+    }
+    .stat-card .sub i {
+      margin-right: 4px;
+    }
+    .stat-card.primary .value { color: var(--primary); }
+    .stat-card.success .value { color: var(--success); }
+    .stat-card.warning .value { color: var(--warning); }
+    .stat-card.danger .value { color: var(--danger); }
+
+    /* Dua Kolom: Grafik + Rekomendasi */
+    .row-two {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 24px;
+      margin-bottom: 28px;
+    }
+    @media (max-width: 768px) {
+      .row-two {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+    }
+    .card h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .card h3 i {
+      color: var(--primary);
+    }
+
+    /* Grafik */
+    .chart-wrapper {
+      position: relative;
+      height: 280px;
+    }
+
+    /* Rekomendasi */
+    .rekom-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .rekom-item {
+      background: var(--light-bg);
+      padding: 14px 18px;
+      border-radius: 12px;
+      border-left: 4px solid var(--primary);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .rekom-item .icon {
+      width: 40px;
+      height: 40px;
+      background: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--primary);
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .rekom-item .info {
+      flex: 1;
+    }
+    .rekom-item .info .title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+    .rekom-item .info .desc {
+      font-size: 13px;
+      color: var(--gray);
+    }
+    .rekom-item.highlight {
+      border-left-color: var(--success);
+      background: #EAFAF1;
+    }
+    .rekom-item.highlight .icon {
+      color: var(--success);
+    }
+    .rekom-item.warning-item {
+      border-left-color: var(--warning);
+      background: #FEF9E7;
+    }
+    .rekom-item.warning-item .icon {
+      color: var(--warning);
+    }
+
+    /* Tabel Riwayat */
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 12px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th {
+      text-align: left;
+      padding: 12px 8px;
+      background: var(--light-bg);
+      color: var(--gray);
+      font-weight: 600;
+      border-bottom: 2px solid #E5E8EB;
+    }
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #ECF0F1;
+    }
+    tr:hover td {
+      background: #FAFCFE;
+    }
+    .badge-rt {
+      background: var(--primary-light);
+      color: var(--primary);
+      padding: 2px 12px;
+      border-radius: 30px;
+      font-weight: 600;
+      font-size: 12px;
+      display: inline-block;
+    }
+    .text-muted {
+      color: var(--gray);
+      font-size: 13px;
+    }
+    .text-center {
+      text-align: center;
+    }
+
+    /* Tombol & Input */
+    .input-section {
+      margin-top: 28px;
+      background: white;
+      border-radius: var(--radius);
+      box-shadow: var(--card-shadow);
+      padding: 24px;
+    }
+    .input-section h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .input-group label {
+      font-weight: 600;
+      font-size: 14px;
+      color: #2C3E50;
+    }
+    .input-group input {
+      padding: 10px 12px;
+      border: 2px solid #DFE6E9;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      transition: 0.2s;
+      width: 100%;
+    }
+    .input-group input:focus {
+      border-color: var(--primary);
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(42, 125, 225, 0.15);
+    }
+    .btn {
+      padding: 12px 32px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .btn:hover {
+      background: #1A5BBF;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 14px rgba(42, 125, 225, 0.3);
+    }
+    .btn:active {
+      transform: scale(0.97);
+    }
+    .btn-success {
+      background: var(--success);
+    }
+    .btn-success:hover {
+      background: #1E8449;
+      box-shadow: 0 6px 14px rgba(39, 174, 96, 0.3);
+    }
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 2px solid var(--primary);
+    }
+    .btn-outline:hover {
+      background: var(--primary);
+      color: white;
+    }
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: #1A1A2E;
+      color: white;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-weight: 500;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.4s ease;
+      z-index: 999;
+    }
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--danger); }
+
+    /* Footer */
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      color: var(--gray);
+      font-size: 13px;
+      border-top: 1px solid #E5E8EB;
+      padding-top: 24px;
+    }
+
+    /* Loading skeleton */
+    .loading {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container" id="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <h1><i class="fas fa-children"></i> Pemetaan Anak RW 10</h1>
+    <div class="header-badge">
+      <i class="fas fa-sync-alt fa-fw" id="lastUpdateIcon"></i>
+      <span id="lastUpdateText">Memuat...</span>
+    </div>
+  </div>
+
+  <!-- STATISTIK -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card primary">
+      <div class="label"><i class="fas fa-users"></i> Total Anak</div>
+      <div class="value" id="totalAnak">-</div>
+      <div class="sub"><i class="fas fa-venus-mars"></i> Usia 5–15 tahun</div>
+    </div>
+    <div class="stat-card success">
+      <div class="label"><i class="fas fa-arrow-up"></i> RT Terbanyak</div>
+      <div class="value" id="rtTerbanyak">-</div>
+      <div class="sub" id="rtTerbanyakJumlah">-</div>
+    </div>
+    <div class="stat-card warning">
+      <div class="label"><i class="fas fa-arrow-down"></i> RT Tersedikit</div>
+      <div class="value" id="rtTersedikit">-</div>
+      <div class="sub" id="rtTersedikitJumlah">-</div>
+    </div>
+    <div class="stat-card danger">
+      <div class="label"><i class="fas fa-clock"></i> Total Update</div>
+      <div class="value" id="totalUpdate">-</div>
+      <div class="sub"><i class="fas fa-history"></i> Riwayat perubahan</div>
+    </div>
+  </div>
+
+  <!-- GRAFIK + REKOMENDASI -->
+  <div class="row-two">
+    <div class="card">
+      <h3><i class="fas fa-chart-bar"></i> Persebaran Anak per RT</h3>
+      <div class="chart-wrapper">
+        <canvas id="chartAnak"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="fas fa-lightbulb"></i> Rekomendasi Program</h3>
+      <div class="rekom-list" id="rekomList">
+        <div class="rekom-item highlight">
+          <div class="icon"><i class="fas fa-star"></i></div>
+          <div class="info">
+            <div class="title">Memuat rekomendasi...</div>
+            <div class="desc">Silakan tunggu sebentar</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABEL RIWAYAT -->
+  <div class="card" style="margin-bottom: 28px;">
+    <h3><i class="fas fa-history"></i> Riwayat Perubahan Data</h3>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Waktu</th>
+            <th>RT</th>
+            <th>Jumlah Anak</th>
+            <th>Tahun</th>
+          </tr>
+        </thead>
+        <tbody id="riwayatBody">
+          <tr><td colspan="4" class="text-center text-muted">Memuat riwayat...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- FORM INPUT -->
+  <div class="input-section">
+    <h3><i class="fas fa-pen"></i> Update Data Anak per RT</h3>
+    <div class="input-grid" id="inputGrid">
+      <!-- diisi oleh JS -->
+    </div>
+    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+      <button class="btn" id="btnSimpan"><i class="fas fa-save"></i> Simpan Perubahan</button>
+      <button class="btn btn-outline" id="btnReset"><i class="fas fa-undo-alt"></i> Reset ke Data Terakhir</button>
+    </div>
+    <p style="margin-top: 14px; font-size: 13px; color: var(--gray);">
+      <i class="fas fa-info-circle"></i> Ubah angka di atas, lalu klik Simpan. Data akan otomatis tercatat di riwayat.
+    </p>
+  </div>
+
+  <div class="footer">
+    <i class="fas fa-code"></i> Dibangun untuk KKN · Data RW 10 · <span id="footerYear"></span>
+  </div>
+</div>
+
+<!-- TOAST NOTIFICATION -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ============================================================
+  //  KONFIGURASI
+  // ============================================================
+  const API_BASE = 'https://sheetdb.io/api/v1/w75ilqhtz3tmr';
+  const API_RIWAYAT = API_BASE + '?sheet=RIWAYAT';
+
+  // ============================================================
+  //  STATE
+  // ============================================================
+  let dataAktif = [];         // array objek { RT, JUMLAH_ANAK, TAHUN, UPDATED_AT }
+  let chartInstance = null;
+
+  // ============================================================
+  //  DOM REFS
+  // ============================================================
+  const $ = (id) => document.getElementById(id);
+  const totalAnakEl = $('totalAnak');
+  const rtTerbanyakEl = $('rtTerbanyak');
+  const rtTerbanyakJumlahEl = $('rtTerbanyakJumlah');
+  const rtTersedikitEl = $('rtTersedikit');
+  const rtTersedikitJumlahEl = $('rtTersedikitJumlah');
+  const totalUpdateEl = $('totalUpdate');
+  const lastUpdateText = $('lastUpdateText');
+  const riwayatBody = $('riwayatBody');
+  const inputGrid = $('inputGrid');
+  const rekomList = $('rekomList');
+  const btnSimpan = $('btnSimpan');
+  const btnReset = $('btnReset');
+  const toast = $('toast');
+
+  // ============================================================
+  //  TOAST
+  // ============================================================
+  function showToast(msg, type = 'success') {
+    toast.textContent = msg;
+    toast.className = 'toast ' + type;
+    // force reflow
+    void toast.offsetWidth;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+
+  // ============================================================
+  //  FETCH DATA AKTIF
+  // ============================================================
+  async function fetchDataAktif() {
+    const res = await fetch(API_BASE);
+    if (!res.ok) throw new Error('Gagal mengambil data aktif');
+    const raw = await res.json();
+    // pastikan angka
+    dataAktif = raw.map(item => ({
+      ...item,
+      JUMLAH_ANAK: parseInt(item.JUMLAH_ANAK, 10) || 0
+    }));
+    return dataAktif;
+  }
+
+  // ============================================================
+  //  FETCH RIWAYAT
+  // ============================================================
+  async function fetchRiwayat() {
+    const res = await fetch(API_RIWAYAT);
+    if (!res.ok) throw new Error('Gagal mengambil riwayat');
+    const raw = await res.json();
+    return raw.map(item => ({
+      ...item,
+      JUMLAH_ANAK: parseInt(item.JUMLAH_ANAK, 10) || 0
+    }));
+  }
+
+  // ============================================================
+  //  RENDER STATISTIK
+  // ============================================================
+  function renderStats(data) {
+    if (!data || data.length === 0) return;
+    const total = data.reduce((sum, d) => sum + d.JUMLAH_ANAK, 0);
+    totalAnakEl.textContent = total;
+
+    const sorted = [...data].sort((a, b) => b.JUMLAH_ANAK - a.JUMLAH_ANAK);
+    const max = sorted[0];
+    const min = sorted[sorted.length - 1];
+
+    rtTerbanyakEl.textContent = max.RT;
+    rtTerbanyakJumlahEl.textContent = max.JUMLAH_ANAK + ' anak';
+    rtTersedikitEl.textContent = min.RT;
+    rtTersedikitJumlahEl.textContent = min.JUMLAH_ANAK + ' anak';
+
+    // last update
+    const dates = data.map(d => d.UPDATED_AT).filter(Boolean);
+    if (dates.length) {
+      const latest = dates.sort().reverse()[0];
+      lastUpdateText.textContent = 'Update: ' + latest;
+    }
+  }
+
+  // ============================================================
+  //  RENDER GRAFIK
+  // ============================================================
+  function renderChart(data) {
+    const ctx = document.getElementById('chartAnak').getContext('2d');
+    const labels = data.map(d => d.RT);
+    const values = data.map(d => d.JUMLAH_ANAK);
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Jumlah Anak (5–15 th)',
+          data: values,
+          backgroundColor: 'rgba(42, 125, 225, 0.7)',
+          borderColor: 'rgba(42, 125, 225, 1)',
+          borderWidth: 2,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: { stepSize: 1, font: { size: 12 } }
+          },
+          x: {
+            ticks: { font: { size: 12, weight: 'bold' } }
+          }
+        }
+      }
+    });
+  }
+
+  // ============================================================
+  //  RENDER REKOMENDASI
+  // ============================================================
+  function renderRekomendasi(data) {
+    if (!data || data.length === 0) {
+      rekomList.innerHTML = `<div class="rekom-item"><div class="info"><div class="title">Belum ada data</div></div></div>`;
+      return;
+    }
+    const sorted = [...data].sort((a, b) => b.JUMLAH_ANAK - a.JUMLAH_ANAK);
+    const max = sorted[0];
+    const total = data.reduce((sum, d) => sum + d.JUMLAH_ANAK, 0);
+
+    // rekom 1: RT terbanyak
+    const rekom1 = `<div class="rekom-item highlight">
+      <div class="icon"><i class="fas fa-flag-checkered"></i></div>
+      <div class="info">
+        <div class="title">Prioritas: ${max.RT}</div>
+        <div class="desc">Anak terbanyak (${max.JUMLAH_ANAK} anak). Cocok untuk Pojok Baca atau Program Literasi.</div>
+      </div>
+    </div>`;
+
+    // rekom 2: saran umum
+    let rekom2 = '';
+    if (total > 50) {
+      rekom2 = `<div class="rekom-item">
+        <div class="icon"><i class="fas fa-hand-holding-heart"></i></div>
+        <div class="info">
+          <div class="title">Program Kolaborasi</div>
+          <div class="desc">Total anak cukup banyak (${total}). Libatkan karang taruna untuk kegiatan rutin.</div>
+        </div>
+      </div>`;
+    } else {
+      rekom2 = `<div class="rekom-item warning-item">
+        <div class="icon"><i class="fas fa-seedling"></i></div>
+        <div class="info">
+          <div class="title">Penguatan Basis RT</div>
+          <div class="desc">Total anak ${total}, fokus pada 1-2 RT dengan kepadatan tertinggi.</div>
+        </div>
+      </div>`;
+    }
+
+    rekomList.innerHTML = rekom1 + rekom2;
+  }
+
+  // ============================================================
+  //  RENDER TABEL RIWAYAT
+  // ============================================================
+  function renderRiwayat(rows) {
+    if (!rows || rows.length === 0) {
+      riwayatBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">Belum ada riwayat perubahan</td></tr>`;
+      totalUpdateEl.textContent = '0';
+      return;
+    }
+    // tampilkan 15 terbaru (desc)
+    const sorted = rows.sort((a, b) => new Date(b.TANGGAL) - new Date(a.TANGGAL));
+    const latest = sorted.slice(0, 15);
+    totalUpdateEl.textContent = rows.length;
+
+    let html = '';
+    latest.forEach(row => {
+      const tanggal = row.TANGGAL || '-';
+      const rt = row.RT || '-';
+      const jumlah = row.JUMLAH_ANAK;
+      const tahun = row.TAHUN || '-';
+      html += `<tr>
+        <td>${tanggal}</td>
+        <td><span class="badge-rt">${rt}</span></td>
+        <td><strong>${jumlah}</strong></td>
+        <td>${tahun}</td>
+      </tr>`;
+    });
+    riwayatBody.innerHTML = html;
+  }
+
+  // ============================================================
+  //  RENDER FORM INPUT
+  // ============================================================
+  function renderInputForm(data) {
+    if (!data || data.length === 0) return;
+    // urutkan berdasarkan RT
+    const sorted = [...data].sort((a, b) => a.RT.localeCompare(b.RT));
+    let html = '';
+    sorted.forEach(item => {
+      const rt = item.RT;
+      const val = item.JUMLAH_ANAK;
+      html += `<div class="input-group">
+        <label for="input_${rt}">${rt}</label>
+        <input type="number" id="input_${rt}" value="${val}" min="0" step="1">
+      </div>`;
+    });
+    inputGrid.innerHTML = html;
+  }
+
+  // ============================================================
+  //  LOAD ALL DATA
+  // ============================================================
+  async function loadAll() {
+    try {
+      // Data Aktif
+      const aktif = await fetchDataAktif();
+      renderStats(aktif);
+      renderChart(aktif);
+      renderRekomendasi(aktif);
+      renderInputForm(aktif);
+
+      // Riwayat
+      const riwayat = await fetchRiwayat();
+      renderRiwayat(riwayat);
+
+    } catch (err) {
+      console.error(err);
+      showToast('Gagal memuat data: ' + err.message, 'error');
+    }
+  }
+
+  // ============================================================
+  //  SIMPAN DATA (POST ke SheetDB)
+  // ============================================================
+  async function simpanData() {
+    // kumpulkan nilai dari input
+    const inputs = inputGrid.querySelectorAll('input');
+    const payload = [];
+    inputs.forEach(inp => {
+      const rt = inp.id.replace('input_', '');
+      const val = parseInt(inp.value, 10);
+      if (isNaN(val) || val < 0) {
+        showToast(`Nilai untuk ${rt} tidak valid (min 0)`, 'error');
+        throw new Error('Invalid input');
+      }
+      payload.push({
+        RT: rt,
+        JUMLAH_ANAK: val,
+        TAHUN: '2026',
+        UPDATED_AT: new Date().toLocaleString('id-ID', { hour12: false })
+      });
+    });
+
+    // Kirim ke SheetDB (update all rows)
+    const res = await fetch(API_BASE, {
+      method: 'PATCH', // PATCH untuk update banyak row sekaligus
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) {
+      const errText = await res.text();
+      throw new Error('Gagal simpan: ' + errText);
+    }
+
+    showToast('✅ Data berhasil disimpan! Riwayat otomatis tercatat.', 'success');
+    // Reload semua data
+    await loadAll();
+  }
+
+  // ============================================================
+  //  RESET FORM (ambil dari dataAktif terakhir)
+  // ============================================================
+  function resetForm() {
+    if (dataAktif.length === 0) {
+      showToast('Belum ada data untuk direset', 'error');
+      return;
+    }
+    renderInputForm(dataAktif);
+    showToast('Form direset ke data terakhir', 'success');
+  }
+
+  // ============================================================
+  //  INIT
+  // ============================================================
+  document.addEventListener('DOMContentLoaded', async () => {
+    // footer tahun
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+
+    // event listeners
+    btnSimpan.addEventListener('click', simpanData);
+    btnReset.addEventListener('click', resetForm);
+
+    // load data
+    await loadAll();
+  });
+
+  // auto refresh setiap 30 detik (biar dashboard live)
+  setInterval(() => {
+    loadAll().catch(console.warn);
+  }, 30000);
+</script>
+
+</body>
+  </html>
