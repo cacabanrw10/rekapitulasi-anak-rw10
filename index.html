@@ -8,7 +8,6 @@
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
-    /* ===== RESET & VARIABEL ===== */
     * {
       margin: 0;
       padding: 0;
@@ -39,7 +38,6 @@
       margin: 0 auto;
     }
 
-    /* ===== HEADER ===== */
     .header {
       background: white;
       padding: 24px 32px;
@@ -81,7 +79,6 @@
       font-size: 12px;
     }
 
-    /* ===== STATISTIK ===== */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -138,7 +135,6 @@
       color: var(--danger);
     }
 
-    /* ===== DUA KOLOM ===== */
     .row-two {
       display: grid;
       grid-template-columns: 2fr 1fr;
@@ -172,13 +168,11 @@
       color: var(--primary);
     }
 
-    /* ===== GRAFIK ===== */
     .chart-wrapper {
       position: relative;
       height: 280px;
     }
 
-    /* ===== REKOMENDASI ===== */
     .rekom-list {
       display: flex;
       flex-direction: column;
@@ -240,7 +234,6 @@
       color: var(--warning);
     }
 
-    /* ===== TABEL RIWAYAT ===== */
     .table-wrap {
       overflow-x: auto;
       margin-top: 12px;
@@ -289,7 +282,6 @@
       text-align: center;
     }
 
-    /* ===== FORM INPUT ===== */
     .input-section {
       margin-top: 28px;
       background: white;
@@ -393,7 +385,6 @@
       color: white;
     }
 
-    /* ===== TOAST ===== */
     .toast {
       position: fixed;
       bottom: 30px;
@@ -422,7 +413,6 @@
       background: var(--danger);
     }
 
-    /* ===== FOOTER ===== */
     .footer {
       margin-top: 40px;
       text-align: center;
@@ -438,7 +428,6 @@
 
   <div class="container" id="app">
 
-    <!-- HEADER -->
     <div class="header">
       <h1><i class="fas fa-children"></i> Pemetaan Anak RW 10</h1>
       <div class="header-badge">
@@ -447,7 +436,6 @@
       </div>
     </div>
 
-    <!-- STATISTIK -->
     <div class="stats-grid" id="statsGrid">
       <div class="stat-card primary">
         <div class="label"><i class="fas fa-users"></i> Total Anak</div>
@@ -471,7 +459,6 @@
       </div>
     </div>
 
-    <!-- GRAFIK + REKOMENDASI -->
     <div class="row-two">
       <div class="card">
         <h3><i class="fas fa-chart-bar"></i> Persebaran Anak per RT</h3>
@@ -493,7 +480,6 @@
       </div>
     </div>
 
-    <!-- TABEL RIWAYAT -->
     <div class="card" style="margin-bottom: 28px;">
       <h3><i class="fas fa-history"></i> Riwayat Perubahan Data</h3>
       <div class="table-wrap">
@@ -513,12 +499,9 @@
       </div>
     </div>
 
-    <!-- FORM INPUT -->
     <div class="input-section">
       <h3><i class="fas fa-pen"></i> Update Data Anak per RT</h3>
-      <div class="input-grid" id="inputGrid">
-        <!-- diisi oleh JS -->
-      </div>
+      <div class="input-grid" id="inputGrid"></div>
       <div style="display: flex; gap: 12px; flex-wrap: wrap;">
         <button class="btn" id="btnSimpan"><i class="fas fa-save"></i> Simpan Perubahan</button>
         <button class="btn btn-outline" id="btnReset"><i class="fas fa-undo-alt"></i> Reset ke Data Terakhir</button>
@@ -533,7 +516,6 @@
     </div>
   </div>
 
-  <!-- TOAST -->
   <div class="toast" id="toast"></div>
 
   <script>
@@ -566,13 +548,11 @@
 
     function normalizeTanggal(str) {
       if (!str) return formatTanggal(new Date());
-      // coba parse sebagai US format (MM/DD/YYYY) atau ISO
       const us = new Date(str);
       if (!isNaN(us)) return formatTanggal(us);
-      // sudah DD/MM/YYYY?
       const parsed = parseTanggal(str);
       if (!isNaN(parsed)) return formatTanggal(parsed);
-      return str; // fallback
+      return str;
     }
 
     // ================================================================
@@ -655,7 +635,6 @@
       rtTersedikitEl.textContent = min.RT;
       rtTersedikitJumlahEl.textContent = min.JUMLAH_ANAK + ' anak';
 
-      // Last update — sorting pakai parseTanggal
       const dates = data.map(d => d.UPDATED_AT).filter(Boolean);
       if (dates.length) {
         const latest = dates.sort((a, b) => parseTanggal(b) - parseTanggal(a))[0];
@@ -735,6 +714,9 @@
       rekomList.innerHTML = rekom1 + rekom2;
     }
 
+    // ================================================================
+    //  7a. RENDER RIWAYAT (HANYA 1 BARIS TERBARU PER RT)
+    // ================================================================
     function renderRiwayat(rows) {
       if (!rows || rows.length === 0) {
         riwayatBody.innerHTML =
@@ -742,13 +724,24 @@
         totalUpdateEl.textContent = '0';
         return;
       }
-      // sort pakai parseTanggal
-      const sorted = rows.sort((a, b) => parseTanggal(b.TANGGAL) - parseTanggal(a.TANGGAL));
-      const latest = sorted.slice(0, 15);
+
+      // Ambil data terbaru per RT
+      const latestPerRT = {};
+      for (const row of rows) {
+        const rt = row.RT;
+        const tanggal = parseTanggal(row.TANGGAL);
+        if (!latestPerRT[rt] || tanggal > parseTanggal(latestPerRT[rt].TANGGAL)) {
+          latestPerRT[rt] = row;
+        }
+      }
+
+      // Urutkan berdasarkan RT
+      const latestRows = Object.values(latestPerRT).sort((a, b) => a.RT.localeCompare(b.RT));
+
       totalUpdateEl.textContent = rows.length;
 
       let html = '';
-      for (const row of latest) {
+      for (const row of latestRows) {
         const tanggal = row.TANGGAL || '-';
         const rt = row.RT || '-';
         const jumlah = row.JUMLAH_ANAK;
@@ -763,7 +756,6 @@
       riwayatBody.innerHTML = html;
     }
 
-    // Sanitasi sederhana untuk XSS
     function escapeHtml(text) {
       if (!text) return '';
       const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
@@ -814,17 +806,14 @@
     //  9. SIMPAN DATA (PUT per ID - PALING AMAN)
     // ================================================================
     async function simpanData() {
-      // Cegah double click / overlap
       if (isSaving) return;
       isSaving = true;
       btnSimpan.disabled = true;
       btnSimpan.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Menyimpan...';
 
       try {
-        // 1. Ambil data terbaru dari server (untuk dapat ID)
         const currentData = await fetchDataAktif();
 
-        // 2. Kumpulkan data dari form
         const inputs = inputGrid.querySelectorAll('input');
         const updates = [];
 
@@ -837,7 +826,6 @@
             return;
           }
 
-          // Cari ID berdasarkan RT
           const existing = currentData.find(d => d.RT === rt);
           if (!existing || !existing.id) {
             throw new Error(`ID untuk ${rt} tidak ditemukan. Pastikan data sudah ada.`);
@@ -852,7 +840,7 @@
           });
         }
 
-        // 3. Update satu per satu pakai PUT
+        // Update semua RT
         for (const item of updates) {
           const putRes = await fetch(`${API_BASE}/id/${item.id}`, {
             method: 'PUT',
@@ -866,7 +854,7 @@
           }
         }
 
-        // 4. Catat ke RIWAYAT
+        // Catat ke RIWAYAT
         const riwayatPayload = updates.map(item => ({
           TANGGAL: formatTanggal(new Date()),
           RT: item.RT,
@@ -921,7 +909,6 @@
 
       await loadAll();
 
-      // Auto refresh tiap 30 detik (tapi cegah overlap)
       setInterval(() => {
         if (!isLoading && !isSaving) loadAll();
       }, 30000);
@@ -929,4 +916,4 @@
   </script>
 
 </body>
-</html>
+  </html>
