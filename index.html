@@ -85,6 +85,7 @@
       display: flex;
       gap: 12px;
       flex-wrap: wrap;
+      align-items: center;
     }
 
     .btn-pdf {
@@ -112,6 +113,37 @@
       opacity: 0.6;
       cursor: not-allowed;
       transform: none !important;
+    }
+
+    .pdf-size-selector {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      padding: 6px 16px 6px 20px;
+      border-radius: 40px;
+      border: 2px solid #DFE6E9;
+    }
+
+    .pdf-size-selector label {
+      font-weight: 600;
+      font-size: 13px;
+      color: #2C3E50;
+    }
+
+    .pdf-size-selector select {
+      padding: 6px 12px;
+      border: 1px solid #DFE6E9;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .pdf-size-selector select:focus {
+      outline: none;
+      border-color: var(--primary);
     }
 
     .stats-grid {
@@ -400,15 +432,6 @@
       transform: none !important;
     }
 
-    .btn-success {
-      background: var(--success);
-    }
-
-    .btn-success:hover:not(:disabled) {
-      background: #1E8449;
-      box-shadow: 0 6px 14px rgba(39, 174, 96, 0.3);
-    }
-
     .btn-outline {
       background: transparent;
       color: var(--primary);
@@ -458,138 +481,91 @@
     }
 
     /* ================================================================
-       STYLE KHUSUS PDF (Siap Cetak A4)
+       STYLE PDF - HANYA JUDUL + GRAFIK (LANDSCAPE)
        ================================================================ */
     #pdfContent {
       display: none;
     }
 
-    @media print {
-      body * {
-        visibility: hidden;
-      }
-      #pdfContent,
-      #pdfContent * {
-        visibility: visible;
-      }
-      #pdfContent {
-        display: block !important;
-        position: fixed;
-        left: 0;
-        top: 0;
-        width: 210mm;
-        padding: 40px;
-        background: white;
-      }
-      .no-print {
-        display: none !important;
-      }
-    }
-
-    /* Tampilan PDF saat di-preview */
-    .pdf-preview {
+    .pdf-preview-simple {
       background: white;
-      padding: 40px;
-      max-width: 210mm;
-      margin: 0 auto;
+      padding: 40px 50px;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-    .pdf-preview .pdf-header {
+    .pdf-preview-simple .pdf-title {
       text-align: center;
-      border-bottom: 4px solid #2A7DE1;
-      padding-bottom: 20px;
       margin-bottom: 30px;
     }
 
-    .pdf-preview .pdf-header h1 {
-      font-size: 32px;
+    .pdf-preview-simple .pdf-title h1 {
+      font-size: 42px;
+      font-weight: 800;
       color: #1A1A2E;
+      letter-spacing: 1px;
     }
 
-    .pdf-preview .pdf-header .sub {
-      font-size: 16px;
+    .pdf-preview-simple .pdf-title .sub {
+      font-size: 20px;
       color: #7F8C8D;
       margin-top: 6px;
-    }
-
-    .pdf-preview .pdf-stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .pdf-preview .pdf-stat {
-      background: #F4F7FC;
-      padding: 16px 20px;
-      border-radius: 12px;
-      text-align: center;
-    }
-
-    .pdf-preview .pdf-stat .number {
-      font-size: 36px;
-      font-weight: 700;
-      color: #2A7DE1;
-    }
-
-    .pdf-preview .pdf-stat .label {
-      font-size: 14px;
-      color: #7F8C8D;
       font-weight: 500;
     }
 
-    .pdf-preview .pdf-chart-wrapper {
-      margin-bottom: 30px;
-      height: 300px;
+    .pdf-preview-simple .pdf-chart-container {
+      flex: 1;
+      min-height: 500px;
+      position: relative;
     }
 
-    .pdf-preview .pdf-table {
-      width: 100%;
-      border-collapse: collapse;
+    .pdf-preview-simple .pdf-chart-container canvas {
+      width: 100% !important;
+      height: 100% !important;
+      max-height: 600px;
+    }
+
+    .pdf-preview-simple .pdf-footer-simple {
+      text-align: center;
       margin-top: 20px;
       font-size: 16px;
-    }
-
-    .pdf-preview .pdf-table th {
-      background: #2A7DE1;
-      color: white;
-      padding: 12px 16px;
-      text-align: left;
-    }
-
-    .pdf-preview .pdf-table td {
-      padding: 12px 16px;
-      border-bottom: 1px solid #ECF0F1;
-    }
-
-    .pdf-preview .pdf-table tr:nth-child(even) {
-      background: #F8FAFC;
-    }
-
-    .pdf-preview .pdf-footer {
-      margin-top: 30px;
-      text-align: center;
-      font-size: 14px;
-      color: #7F8C8D;
+      color: #95A5A6;
       border-top: 2px solid #ECF0F1;
-      padding-top: 20px;
+      padding-top: 16px;
     }
 
-    .pdf-preview .pdf-footer .rt-terbanyak {
-      color: #27AE60;
-      font-weight: 700;
+    .pdf-preview-simple .pdf-footer-simple span {
+      font-weight: 600;
     }
 
-    .pdf-preview .pdf-footer .rt-tersedikit {
-      color: #E74C3C;
-      font-weight: 700;
+    /* Warna-warni untuk RT */
+    .rt-color-0 {
+      background: #2A7DE1;
     }
-
-    @media (max-width: 768px) {
-      .pdf-preview .pdf-stats {
-        grid-template-columns: repeat(2, 1fr);
-      }
+    .rt-color-1 {
+      background: #27AE60;
+    }
+    .rt-color-2 {
+      background: #F39C12;
+    }
+    .rt-color-3 {
+      background: #E74C3C;
+    }
+    .rt-color-4 {
+      background: #8E44AD;
+    }
+    .rt-color-5 {
+      background: #1ABC9C;
+    }
+    .rt-color-6 {
+      background: #E67E22;
+    }
+    .rt-color-7 {
+      background: #34495E;
     }
   </style>
 </head>
@@ -605,6 +581,14 @@
         <div class="header-badge">
           <i class="fas fa-sync-alt fa-fw" id="lastUpdateIcon"></i>
           <span id="lastUpdateText">Memuat...</span>
+        </div>
+        <div class="pdf-size-selector">
+          <label><i class="fas fa-print"></i> Ukuran:</label>
+          <select id="pdfSizeSelect">
+            <option value="a4">A4</option>
+            <option value="a3" selected>A3</option>
+            <option value="a2">A2</option>
+          </select>
         </div>
         <button class="btn-pdf" id="btnDownloadPDF">
           <i class="fas fa-file-pdf"></i> Download PDF
@@ -700,11 +684,11 @@
   <div class="toast" id="toast"></div>
 
   <!-- ================================================================
-       PDF CONTENT (Tersembunyi, untuk generate PDF)
+       PDF CONTENT (HANYA JUDUL + GRAFIK)
        ================================================================ -->
   <div id="pdfContent" style="display:none;">
-    <div class="pdf-preview" id="pdfPreviewContent">
-      <!-- Isi akan di-generate oleh JS -->
+    <div class="pdf-preview-simple" id="pdfPreviewContent">
+      <!-- Diisi oleh JS -->
     </div>
   </div>
 
@@ -714,6 +698,12 @@
     // ================================================================
     const API_BASE = 'https://sheetdb.io/api/v1/w75ilqhtz3tmr';
     const API_RIWAYAT = API_BASE + '?sheet=RIWAYAT';
+
+    // Warna untuk 8 RT (warna-warni)
+    const RT_COLORS = [
+      '#2A7DE1', '#27AE60', '#F39C12', '#E74C3C',
+      '#8E44AD', '#1ABC9C', '#E67E22', '#34495E'
+    ];
 
     // ================================================================
     //  2. HELPER TANGGAL
@@ -726,6 +716,13 @@
       const min = String(date.getMinutes()).padStart(2, '0');
       const s = String(date.getSeconds()).padStart(2, '0');
       return `${d}/${m}/${y} ${h}:${min}:${s}`;
+    }
+
+    function formatTanggalShort(date) {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      return `${d}/${m}/${y}`;
     }
 
     function parseTanggal(str) {
@@ -770,6 +767,7 @@
     const btnSimpan = $('btnSimpan');
     const btnReset = $('btnReset');
     const btnDownloadPDF = $('btnDownloadPDF');
+    const pdfSizeSelect = $('pdfSizeSelect');
     const toast = $('toast');
 
     // ================================================================
@@ -847,19 +845,43 @@
           datasets: [{
             label: 'Jumlah Anak (5–15 th)',
             data: values,
-            backgroundColor: 'rgba(42, 125, 225, 0.7)',
-            borderColor: 'rgba(42, 125, 225, 1)',
+            backgroundColor: RT_COLORS.slice(0, data.length),
+            borderColor: '#fff',
             borderWidth: 2,
-            borderRadius: 6,
+            borderRadius: 8,
           }]
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.parsed.y + ' anak';
+                }
+              }
+            }
+          },
           scales: {
-            y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 12 } } },
-            x: { ticks: { font: { size: 12, weight: 'bold' } } }
+            y: {
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1,
+                font: { size: 14, weight: 'bold' }
+              },
+              title: {
+                display: true,
+                text: 'Jumlah Anak',
+                font: { size: 16, weight: 'bold' }
+              }
+            },
+            x: {
+              ticks: {
+                font: { size: 14, weight: 'bold' }
+              }
+            }
           }
         }
       });
@@ -1083,7 +1105,7 @@
     }
 
     // ================================================================
-    //  11. GENERATE PDF
+    //  11. GENERATE PDF (HANYA JUDUL + GRAFIK, LANDSCAPE)
     // ================================================================
     async function generatePDF() {
       if (dataAktif.length === 0) {
@@ -1095,88 +1117,50 @@
       btnDownloadPDF.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Membuat PDF...';
 
       try {
-        // Siapkan data
         const data = dataAktif;
+        const sortedRT = [...data].sort((a, b) => a.RT.localeCompare(b.RT));
+        const tanggal = formatTanggalShort(new Date());
         const total = data.reduce((sum, d) => sum + d.JUMLAH_ANAK, 0);
-        const sorted = [...data].sort((a, b) => b.JUMLAH_ANAK - a.JUMLAH_ANAK);
-        const max = sorted[0];
-        const min = sorted[sorted.length - 1];
-        const tanggal = formatTanggal(new Date());
+
+        // Pilih ukuran kertas
+        const sizeMap = {
+          'a4': { width: 297, height: 210 }, // A4 landscape
+          'a3': { width: 420, height: 297 }, // A3 landscape
+          'a2': { width: 594, height: 420 } // A2 landscape
+        };
+        const selectedSize = pdfSizeSelect.value;
+        const size = sizeMap[selectedSize] || sizeMap['a3'];
 
         // Siapkan HTML untuk PDF
         const pdfContent = document.getElementById('pdfPreviewContent');
 
-        // Buat tabel HTML
-        let tableRows = '';
-        const sortedRT = [...data].sort((a, b) => a.RT.localeCompare(b.RT));
-        for (const item of sortedRT) {
-          tableRows += `<tr>
-            <td>${item.RT}</td>
-            <td style="text-align:center; font-weight:700;">${item.JUMLAH_ANAK}</td>
-            <td style="text-align:center;">${item.TAHUN}</td>
-          </tr>`;
-        }
-
         pdfContent.innerHTML = `
-          <div class="pdf-header">
+          <div class="pdf-title">
             <h1>📊 Rekap Persebaran Anak RW 10</h1>
-            <div class="sub">Data per ${tanggal} · Usia 5–15 tahun</div>
+            <div class="sub">Data per ${tanggal} · Total ${total} Anak Usia 5-15 Tahun</div>
           </div>
-
-          <div class="pdf-stats">
-            <div class="pdf-stat">
-              <div class="number">${total}</div>
-              <div class="label">Total Anak</div>
-            </div>
-            <div class="pdf-stat">
-              <div class="number" style="color:#27AE60;">${max.RT}</div>
-              <div class="label">RT Terbanyak (${max.JUMLAH_ANAK} anak)</div>
-            </div>
-            <div class="pdf-stat">
-              <div class="number" style="color:#E74C3C;">${min.RT}</div>
-              <div class="label">RT Tersedikit (${min.JUMLAH_ANAK} anak)</div>
-            </div>
-            <div class="pdf-stat">
-              <div class="number" style="color:#F39C12;">${data.length}</div>
-              <div class="label">Total RT</div>
-            </div>
+          <div class="pdf-chart-container">
+            <canvas id="pdfChart"></canvas>
           </div>
-
-          <div style="margin-bottom:20px;">
-            <canvas id="pdfChart" style="width:100%; height:300px;"></canvas>
-          </div>
-
-          <table class="pdf-table">
-            <thead>
-              <tr>
-                <th>RT</th>
-                <th style="text-align:center;">Jumlah Anak</th>
-                <th style="text-align:center;">Tahun</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
-
-          <div class="pdf-footer">
-            <p>
-              <span class="rt-terbanyak">🏆 RT Terbanyak: ${max.RT} (${max.JUMLAH_ANAK} anak)</span>
-              &nbsp;·&nbsp;
-              <span class="rt-tersedikit">📉 RT Tersedikit: ${min.RT} (${min.JUMLAH_ANAK} anak)</span>
-            </p>
-            <p style="margin-top:8px;">Dicetak dari Sistem Informasi Pemetaan Anak RW 10 · ${tanggal}</p>
+          <div class="pdf-footer-simple">
+            <span>RW 10</span> · Sistem Informasi Pemetaan Anak
           </div>
         `;
 
-        // Buat grafik di PDF
-        const pdfCanvas = document.createElement('canvas');
-        pdfCanvas.id = 'pdfChartTemp';
-        pdfCanvas.width = 800;
-        pdfCanvas.height = 400;
-        document.body.appendChild(pdfCanvas);
+        // Tampilkan PDF content untuk di-render
+        const pdfElement = document.getElementById('pdfContent');
+        pdfElement.style.display = 'block';
 
-        const ctx = pdfCanvas.getContext('2d');
+        // Render grafik di PDF
+        const canvas = document.getElementById('pdfChart');
+        const ctx = canvas.getContext('2d');
+
+        // Set ukuran canvas (lebih besar untuk kualitas tinggi)
+        const canvasWidth = size.width * 2;
+        const canvasHeight = size.height * 2;
+        canvas.width = canvasWidth;
+        canvas.height = canvasHeight;
+
         const labels = sortedRT.map(d => d.RT);
         const values = sortedRT.map(d => d.JUMLAH_ANAK);
 
@@ -1187,72 +1171,107 @@
             datasets: [{
               label: 'Jumlah Anak',
               data: values,
-              backgroundColor: [
-                '#2A7DE1', '#27AE60', '#F39C12', '#E74C3C',
-                '#8E44AD', '#1ABC9C', '#E67E22', '#34495E'
-              ],
-              borderColor: '#fff',
-              borderWidth: 2,
-              borderRadius: 8,
+              backgroundColor: RT_COLORS.slice(0, data.length),
+              borderColor: '#ffffff',
+              borderWidth: 3,
+              borderRadius: 12,
+              barPercentage: 0.65,
             }]
           },
           options: {
             responsive: false,
             plugins: {
-              legend: { display: false }
+              legend: {
+                display: true,
+                position: 'top',
+                labels: {
+                  font: { size: 20, weight: 'bold' },
+                  padding: 20,
+                  usePointStyle: true,
+                  pointStyle: 'rectRounded',
+                  boxWidth: 30,
+                  boxHeight: 30
+                }
+              },
+              tooltip: {
+                callbacks: {
+                  label: function(context) {
+                    return context.dataset.label + ': ' + context.parsed.y + ' anak';
+                  }
+                }
+              }
             },
             scales: {
               y: {
                 beginAtZero: true,
-                ticks: { stepSize: 1, font: { size: 14, weight: 'bold' } }
+                ticks: {
+                  stepSize: 1,
+                  font: { size: 28, weight: 'bold' }
+                },
+                title: {
+                  display: true,
+                  text: 'Jumlah Anak',
+                  font: { size: 30, weight: 'bold' }
+                },
+                grid: {
+                  color: 'rgba(0,0,0,0.08)',
+                  drawBorder: true
+                }
               },
               x: {
-                ticks: { font: { size: 14, weight: 'bold' } }
+                ticks: {
+                  font: { size: 28, weight: 'bold' }
+                },
+                grid: {
+                  display: false
+                }
+              }
+            },
+            layout: {
+              padding: {
+                top: 20,
+                bottom: 20,
+                left: 30,
+                right: 30
               }
             }
           }
         });
 
         // Tunggu chart selesai render
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
-        // Ganti canvas di PDF dengan gambar dari canvas temp
-        const pdfChartContainer = document.querySelector('#pdfPreviewContent canvas#pdfChart');
-        if (pdfChartContainer) {
-          pdfChartContainer.getContext('2d').drawImage(pdfCanvas, 0, 0, pdfChartContainer.width, pdfChartContainer.height);
-        }
-
-        // Hapus canvas temp
-        document.body.removeChild(pdfCanvas);
-
-        // Generate PDF
-        const element = document.getElementById('pdfPreviewContent');
+        // Generate PDF dengan ukuran yang dipilih
         const opt = {
-          margin: [10, 10, 10, 10],
-          filename: `Rekap_Anak_RW10_${formatTanggal(new Date()).replace(/\//g, '-').replace(/ /g, '_')}.pdf`,
+          margin: [5, 5, 5, 5],
+          filename: `Rekap_Anak_RW10_${formatTanggalShort(new Date()).replace(/\//g, '-')}.pdf`,
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
             scale: 2,
             useCORS: true,
             logging: false,
-            width: 794, // A4 width in px
-            height: 1123 // A4 height in px
+            width: size.width * 2,
+            height: size.height * 2
           },
           jsPDF: {
             unit: 'mm',
-            format: 'a4',
-            orientation: 'portrait'
+            format: [size.width, size.height],
+            orientation: 'landscape'
           },
           pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
         };
 
-        await html2pdf().set(opt).from(element).save();
+        await html2pdf().set(opt).from(pdfElement).save();
+
+        // Sembunyikan PDF content setelah selesai
+        pdfElement.style.display = 'none';
 
         showToast('✅ PDF berhasil diunduh!', 'success');
 
       } catch (err) {
         console.error(err);
         showToast('❌ Gagal generate PDF: ' + err.message, 'error');
+        document.getElementById('pdfContent').style.display = 'none';
       } finally {
         btnDownloadPDF.disabled = false;
         btnDownloadPDF.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
