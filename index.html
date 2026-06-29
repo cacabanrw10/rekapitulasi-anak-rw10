@@ -6,10 +6,13 @@
   <title>Dashboard Pemetaan Anak RW 10</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js">
   </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
+  </script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
   </script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
   <style>
+    /* ===== SAME AS BEFORE ===== */
     * {
       margin: 0;
       padding: 0;
@@ -481,55 +484,54 @@
     }
 
     /* ================================================================
-       STYLE PDF - HANYA JUDUL + GRAFIK (LANDSCAPE)
+       PDF PREVIEW (Untuk di-capture)
        ================================================================ */
-    #pdfContent {
-      display: none;
-    }
-
-    .pdf-preview-simple {
+    #pdfPreviewContent {
+      position: fixed;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      height: 600px;
       background: white;
-      padding: 40px 50px;
-      width: 100%;
-      height: 100%;
+      padding: 50px 60px;
       display: flex;
       flex-direction: column;
       justify-content: center;
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      z-index: 9999;
     }
 
-    .pdf-preview-simple .pdf-title {
+    #pdfPreviewContent .pdf-title {
       text-align: center;
       margin-bottom: 30px;
     }
 
-    .pdf-preview-simple .pdf-title h1 {
+    #pdfPreviewContent .pdf-title h1 {
       font-size: 42px;
       font-weight: 800;
       color: #1A1A2E;
       letter-spacing: 1px;
     }
 
-    .pdf-preview-simple .pdf-title .sub {
+    #pdfPreviewContent .pdf-title .sub {
       font-size: 20px;
       color: #7F8C8D;
       margin-top: 6px;
       font-weight: 500;
     }
 
-    .pdf-preview-simple .pdf-chart-container {
+    #pdfPreviewContent .pdf-chart-container {
       flex: 1;
-      min-height: 500px;
+      min-height: 350px;
       position: relative;
     }
 
-    .pdf-preview-simple .pdf-chart-container canvas {
+    #pdfPreviewContent .pdf-chart-container canvas {
       width: 100% !important;
       height: 100% !important;
-      max-height: 600px;
     }
 
-    .pdf-preview-simple .pdf-footer-simple {
+    #pdfPreviewContent .pdf-footer-simple {
       text-align: center;
       margin-top: 20px;
       font-size: 16px;
@@ -538,34 +540,8 @@
       padding-top: 16px;
     }
 
-    .pdf-preview-simple .pdf-footer-simple span {
+    #pdfPreviewContent .pdf-footer-simple span {
       font-weight: 600;
-    }
-
-    /* Warna-warni untuk RT */
-    .rt-color-0 {
-      background: #2A7DE1;
-    }
-    .rt-color-1 {
-      background: #27AE60;
-    }
-    .rt-color-2 {
-      background: #F39C12;
-    }
-    .rt-color-3 {
-      background: #E74C3C;
-    }
-    .rt-color-4 {
-      background: #8E44AD;
-    }
-    .rt-color-5 {
-      background: #1ABC9C;
-    }
-    .rt-color-6 {
-      background: #E67E22;
-    }
-    .rt-color-7 {
-      background: #34495E;
     }
   </style>
 </head>
@@ -684,12 +660,10 @@
   <div class="toast" id="toast"></div>
 
   <!-- ================================================================
-       PDF CONTENT (HANYA JUDUL + GRAFIK)
+       PDF PREVIEW (Tersembunyi, untuk di-capture)
        ================================================================ -->
-  <div id="pdfContent" style="display:none;">
-    <div class="pdf-preview-simple" id="pdfPreviewContent">
-      <!-- Diisi oleh JS -->
-    </div>
+  <div id="pdfPreviewContent">
+    <!-- Diisi oleh JS -->
   </div>
 
   <script>
@@ -699,7 +673,7 @@
     const API_BASE = 'https://sheetdb.io/api/v1/w75ilqhtz3tmr';
     const API_RIWAYAT = API_BASE + '?sheet=RIWAYAT';
 
-    // Warna untuk 8 RT (warna-warni)
+    // Warna untuk 8 RT
     const RT_COLORS = [
       '#2A7DE1', '#27AE60', '#F39C12', '#E74C3C',
       '#8E44AD', '#1ABC9C', '#E67E22', '#34495E'
@@ -1105,7 +1079,7 @@
     }
 
     // ================================================================
-    //  11. GENERATE PDF (HANYA JUDUL + GRAFIK, LANDSCAPE)
+    //  11. GENERATE PDF (MANUAL - STABIL)
     // ================================================================
     async function generatePDF() {
       if (dataAktif.length === 0) {
@@ -1121,20 +1095,14 @@
         const sortedRT = [...data].sort((a, b) => a.RT.localeCompare(b.RT));
         const tanggal = formatTanggalShort(new Date());
         const total = data.reduce((sum, d) => sum + d.JUMLAH_ANAK, 0);
+        const labels = sortedRT.map(d => d.RT);
+        const values = sortedRT.map(d => d.JUMLAH_ANAK);
 
-        // Pilih ukuran kertas
-        const sizeMap = {
-          'a4': { width: 297, height: 210 }, // A4 landscape
-          'a3': { width: 420, height: 297 }, // A3 landscape
-          'a2': { width: 594, height: 420 } // A2 landscape
-        };
-        const selectedSize = pdfSizeSelect.value;
-        const size = sizeMap[selectedSize] || sizeMap['a3'];
+        // Siapkan container PDF
+        const pdfContainer = document.getElementById('pdfPreviewContent');
 
-        // Siapkan HTML untuk PDF
-        const pdfContent = document.getElementById('pdfPreviewContent');
-
-        pdfContent.innerHTML = `
+        // Buat HTML
+        pdfContainer.innerHTML = `
           <div class="pdf-title">
             <h1>📊 Rekap Persebaran Anak RW 10</h1>
             <div class="sub">Data per ${tanggal} · Total ${total} Anak Usia 5-15 Tahun</div>
@@ -1147,22 +1115,15 @@
           </div>
         `;
 
-        // Tampilkan PDF content untuk di-render
-        const pdfElement = document.getElementById('pdfContent');
-        pdfElement.style.display = 'block';
-
-        // Render grafik di PDF
+        // Render grafik di canvas PDF
         const canvas = document.getElementById('pdfChart');
         const ctx = canvas.getContext('2d');
 
-        // Set ukuran canvas (lebih besar untuk kualitas tinggi)
-        const canvasWidth = size.width * 2;
-        const canvasHeight = size.height * 2;
+        // Set ukuran canvas (lebih besar untuk kualitas bagus)
+        const canvasWidth = 700;
+        const canvasHeight = 350;
         canvas.width = canvasWidth;
         canvas.height = canvasHeight;
-
-        const labels = sortedRT.map(d => d.RT);
-        const values = sortedRT.map(d => d.JUMLAH_ANAK);
 
         new Chart(ctx, {
           type: 'bar',
@@ -1174,8 +1135,8 @@
               backgroundColor: RT_COLORS.slice(0, data.length),
               borderColor: '#ffffff',
               borderWidth: 3,
-              borderRadius: 12,
-              barPercentage: 0.65,
+              borderRadius: 10,
+              barPercentage: 0.6,
             }]
           },
           options: {
@@ -1185,12 +1146,12 @@
                 display: true,
                 position: 'top',
                 labels: {
-                  font: { size: 20, weight: 'bold' },
-                  padding: 20,
+                  font: { size: 16, weight: 'bold' },
+                  padding: 15,
                   usePointStyle: true,
                   pointStyle: 'rectRounded',
-                  boxWidth: 30,
-                  boxHeight: 30
+                  boxWidth: 20,
+                  boxHeight: 20
                 }
               },
               tooltip: {
@@ -1206,72 +1167,83 @@
                 beginAtZero: true,
                 ticks: {
                   stepSize: 1,
-                  font: { size: 28, weight: 'bold' }
+                  font: { size: 20, weight: 'bold' }
                 },
                 title: {
                   display: true,
                   text: 'Jumlah Anak',
-                  font: { size: 30, weight: 'bold' }
+                  font: { size: 22, weight: 'bold' }
                 },
                 grid: {
-                  color: 'rgba(0,0,0,0.08)',
-                  drawBorder: true
+                  color: 'rgba(0,0,0,0.08)'
                 }
               },
               x: {
                 ticks: {
-                  font: { size: 28, weight: 'bold' }
+                  font: { size: 20, weight: 'bold' }
                 },
-                grid: {
-                  display: false
-                }
+                grid: { display: false }
               }
             },
             layout: {
               padding: {
-                top: 20,
-                bottom: 20,
-                left: 30,
-                right: 30
+                top: 10,
+                bottom: 10,
+                left: 20,
+                right: 20
               }
             }
           }
         });
 
         // Tunggu chart selesai render
-        await new Promise(resolve => setTimeout(resolve, 800));
+        await new Promise(resolve => setTimeout(resolve, 600));
 
-        // Generate PDF dengan ukuran yang dipilih
-        const opt = {
-          margin: [5, 5, 5, 5],
-          filename: `Rekap_Anak_RW10_${formatTanggalShort(new Date()).replace(/\//g, '-')}.pdf`,
-          image: { type: 'jpeg', quality: 0.98 },
-          html2canvas: {
-            scale: 2,
-            useCORS: true,
-            logging: false,
-            width: size.width * 2,
-            height: size.height * 2
-          },
-          jsPDF: {
-            unit: 'mm',
-            format: [size.width, size.height],
-            orientation: 'landscape'
-          },
-          pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+        // Ukuran kertas yang dipilih
+        const sizeMap = {
+          'a4': { width: 210, height: 297 },
+          'a3': { width: 297, height: 420 },
+          'a2': { width: 420, height: 594 }
         };
+        const selectedSize = pdfSizeSelect.value;
+        const size = sizeMap[selectedSize] || sizeMap['a3'];
 
-        await html2pdf().set(opt).from(pdfElement).save();
+        // Capture dengan html2canvas
+        const canvasImg = await html2canvas(pdfContainer, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          width: 800,
+          height: 600,
+          backgroundColor: '#ffffff'
+        });
 
-        // Sembunyikan PDF content setelah selesai
-        pdfElement.style.display = 'none';
+        const imgData = canvasImg.toDataURL('image/jpeg', 0.95);
+
+        // Buat PDF dengan jsPDF
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [size.width, size.height]
+        });
+
+        // Hitung rasio untuk mengisi halaman
+        const pdfWidth = size.width;
+        const pdfHeight = size.height;
+        const margin = 5;
+
+        const imgWidth = pdfWidth - (margin * 2);
+        const imgHeight = (canvasImg.height / canvasImg.width) * imgWidth;
+
+        pdf.addImage(imgData, 'JPEG', margin, margin, imgWidth, imgHeight);
+        pdf.save(`Rekap_Anak_RW10_${tanggal.replace(/\//g, '-')}.pdf`);
 
         showToast('✅ PDF berhasil diunduh!', 'success');
 
       } catch (err) {
         console.error(err);
         showToast('❌ Gagal generate PDF: ' + err.message, 'error');
-        document.getElementById('pdfContent').style.display = 'none';
       } finally {
         btnDownloadPDF.disabled = false;
         btnDownloadPDF.innerHTML = '<i class="fas fa-file-pdf"></i> Download PDF';
